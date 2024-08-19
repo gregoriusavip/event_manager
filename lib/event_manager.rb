@@ -3,6 +3,7 @@
 require 'csv'
 require 'google/apis/civicinfo_v2'
 require 'erb'
+require 'time'
 
 def clean_zipcode(zipcode)
   zipcode.to_s.rjust(5, '0')[0..4]
@@ -12,6 +13,13 @@ def clean_phone_numbers(phone_numbers)
   phone_number_digits = phone_numbers.gsub(/\D/, '')
   phone_number_digits[0] = '' if phone_number_digits.length.eql?(11) && phone_number_digits[0].eql?('1')
   phone_number_digits.length.eql?(10) ? phone_number_digits : nil
+end
+
+def find_hour(reg_dates)
+  hours_freq = reg_dates.each_with_object(Hash.new(0)) do |date, hours|
+    hours[Time.strptime(date, '%m/%d/%y %H:%M').strftime('%I%p')] += 1
+  end
+  hours_freq.max_by { |_, v| v }[0]
 end
 
 def legislators_by_zipcode(zip) # rubocop:disable Metrics/MethodLength
@@ -42,14 +50,16 @@ end
 puts 'EventManager initialized.'
 
 contents = CSV.open(
-  'event_attendees_full.csv',
+  'event_attendees.csv',
   headers: true,
   header_converters: :symbol
 )
 
-contents.each do |row|
-  p "Name: #{row[:first_name]}, Phone Number: #{clean_phone_numbers(row[:homephone])}"
-end
+# contents.each do |row|
+#  p "Name: #{row[:first_name]}, Phone Number: #{clean_phone_numbers(row[:homephone])}"
+# end
+
+p "Peak registration hours: #{find_hour(contents.read[:regdate])}"
 
 # template_letter = File.read('form_letter.erb')
 # erb_template = ERB.new template_letter
