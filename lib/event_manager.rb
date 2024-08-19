@@ -15,11 +15,11 @@ def clean_phone_numbers(phone_numbers)
   phone_number_digits.length.eql?(10) ? phone_number_digits : nil
 end
 
-def find_hour(reg_dates)
-  hours_freq = reg_dates.each_with_object(Hash.new(0)) do |date, hours|
-    hours[Time.strptime(date, '%m/%d/%y %H:%M').strftime('%I%p')] += 1
+def time_targeting(reg_dates, format)
+  freq = reg_dates.each_with_object(Hash.new(0)) do |date, time|
+    time[Time.strptime(date, '%m/%d/%y %H:%M').strftime(format)] += 1
   end
-  hours_freq.max_by { |_, v| v }[0]
+  freq.max_by { |_, v| v }[0]
 end
 
 def legislators_by_zipcode(zip) # rubocop:disable Metrics/MethodLength
@@ -50,7 +50,7 @@ end
 puts 'EventManager initialized.'
 
 contents = CSV.open(
-  'event_attendees.csv',
+  'event_attendees_full.csv',
   headers: true,
   header_converters: :symbol
 )
@@ -59,7 +59,8 @@ contents = CSV.open(
 #  p "Name: #{row[:first_name]}, Phone Number: #{clean_phone_numbers(row[:homephone])}"
 # end
 
-p "Peak registration hours: #{find_hour(contents.read[:regdate])}"
+p "Peak registration hours: #{time_targeting(contents.read[:regdate], '%I%p')}"
+# p "Peak registration day: #{time_targeting(contents.read[:regdate], '%A')}"
 
 # template_letter = File.read('form_letter.erb')
 # erb_template = ERB.new template_letter
